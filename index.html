@@ -32,12 +32,12 @@
   <label>
     Mode:
     <select id="modeSelect">
-      <option>Read Barcodes</option>
+      <option selected>Read Barcodes</option>
       <option>Read Text</option>
     </select>
   </label>
   <label>
-    Enable Scan Region:
+    Scan Region:
     <input type="checkbox" id="scanRegionCheckBox"/>
   </label>
   <div id="cameraViewContainer"></div>
@@ -116,9 +116,9 @@
       if (cameraEnhancer) {
         if (scanRegionCheckBox.checked) {
           await cameraEnhancer.setScanRegion({
-            x: 0,
+            x: 1,
             y: 40,
-            width: 100,
+            width: 98,
             height: 20,
             isMeasuredInPercentage: true,
           });
