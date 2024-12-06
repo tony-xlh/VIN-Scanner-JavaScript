@@ -36,7 +36,11 @@
       <option>Read Text</option>
     </select>
   </label>
-  <div id="cameraViewContainer" style=""></div>
+  <label>
+    Enable Scan Region:
+    <input type="checkbox" id="scanRegionCheckBox"/>
+  </label>
+  <div id="cameraViewContainer"></div>
   <div>Result:</div>
   <pre id="parsedResult"></pre>
   <script>
@@ -46,10 +50,10 @@
     modeSelect.addEventListener("change",function(){
       updateTemplate(modeSelect.selectedIndex);
     })
+    const scanRegionCheckBox = document.getElementById("scanRegionCheckBox");
+    scanRegionCheckBox.addEventListener("change",toggleScanRegion);
     const toggleButton = document.getElementById("toggleButton");
-    toggleButton.addEventListener("click",function(){
-      toggleDetection();
-    })
+    toggleButton.addEventListener("click",toggleDetection)
 
     let router;
     let parser;
@@ -107,6 +111,24 @@
         toggleButton.innerText = "Stop Detection";
       }
     };
+
+    async function toggleScanRegion(){
+      if (cameraEnhancer) {
+        if (scanRegionCheckBox.checked) {
+          await cameraEnhancer.setScanRegion({
+            x: 0,
+            y: 40,
+            width: 100,
+            height: 20,
+            isMeasuredInPercentage: true,
+          });
+        }else{
+          await cameraEnhancer.setScanRegion(null);
+        }
+      }else{
+        scanRegionCheckBox.checked = false;
+      }
+    }
 
     async function updateTemplate(mode){
       await router.stopCapturing();
