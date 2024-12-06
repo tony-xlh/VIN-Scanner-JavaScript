@@ -13,13 +13,28 @@
 
 <body>
   <h1>VIN Scanner</h1>
-  <button onclick="startDetection()">Start Detection</button><span id="status"></span>
-  <div id="cameraViewContainer" style="width: 50vw; height: 45vh; margin-top: 10px; display: none"></div>
-
+  <button id="toggleButton">Start Detection</button>
+  <label>
+    Mode:
+    <select id="modeSelect">
+      <option>Read Barcodes</option>
+      <option>Read Text</option>
+    </select>
+  </label>
+  <span id="status"></span>
+  <div id="cameraViewContainer" style="width: 50vw; height: 45vh; margin-top: 10px;"></div>
   <script>
-    const cameraViewContainer = document.querySelector(
-      "#cameraViewContainer"
-    );
+    const cameraViewContainer = document.getElementById("cameraViewContainer");
+    const modeSelect = document.getElementById("modeSelect");
+    let templateName = "ReadVINBarcode";
+    modeSelect.addEventListener("change",function(){
+      updateTemplate(modeSelect.selectedIndex);
+    })
+    const toggleButton = document.getElementById("toggleButton");
+    toggleButton.addEventListener("click",function(){
+      toggleDetection();
+    })
+
     let router;
     let cameraEnhancer;
     init();
@@ -49,11 +64,31 @@
       document.getElementById("status").innerText = text;
     }
 
-    async function startDetection() {
-      cameraViewContainer.style.display = "block";
-      await cameraEnhancer.open();
-      await router.startCapturing("ReadVINBarcode");
+    async function toggleDetection() {
+      if (cameraEnhancer.isOpen()) {
+        await router.stopCapturing();
+        await cameraEnhancer.close();
+        toggleButton.innerText = "Start Detection";
+      }else{
+        await cameraEnhancer.open();
+        await router.startCapturing(templateName);
+        toggleButton.innerText = "Stop Detection";
+      }
     };
+
+    async function updateTemplate(mode){
+      await router.stopCapturing();
+      if (mode === 0) {
+        templateName = "ReadVINBarcode";
+        await router.initSettings("./VINBarcodeTemplate.json");
+      }else{
+        templateName = "ReadVINText";
+        await router.initSettings("./VINTextTemplate.json");
+      }
+      if (cameraEnhancer.isOpen()) {
+        await router.startCapturing(templateName);
+      }
+    }
   </script>
 </body>
 
