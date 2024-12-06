@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/dynamsoft-capture-vision-bundle@2.4.2200/dist/dcv.bundle.js"></script>
+  <style>
+    #status {
+      margin-left: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>VIN Scanner</h1>
+  <button onclick="startDetection()">Start Detection</button><span id="status"></span>
+  <div id="cameraViewContainer" style="width: 50vw; height: 45vh; margin-top: 10px; display: none"></div>
+
+  <script>
+    const cameraViewContainer = document.querySelector(
+      "#cameraViewContainer"
+    );
+    let router;
+    let cameraEnhancer;
+    init();
+    async function init(){
+      updateStatus("Initializing...");
+      Dynamsoft.License.LicenseManager.initLicense(
+        "DLS2eyJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSJ9"
+      );
+      await Dynamsoft.Core.CoreModule.loadWasm(["DBR","DLR","DCP"]);
+      router = await Dynamsoft.CVR.CaptureVisionRouter.createInstance();
+      let view = await Dynamsoft.DCE.CameraView.createInstance();
+      cameraEnhancer = await Dynamsoft.DCE.CameraEnhancer.createInstance(
+        view
+      );
+      cameraViewContainer.append(view.getUIElement());
+      await router.initSettings("./VINBarcodeTemplate.json");
+      const resultReceiver = new Dynamsoft.CVR.CapturedResultReceiver();
+      resultReceiver.onCapturedResultReceived = (result) => {
+        console.log(result);
+      }
+      await router.addResultReceiver(resultReceiver);
+      router.setInput(cameraEnhancer);
+      updateStatus("Ready.");
+    }
+
+    function updateStatus(text){
+      document.getElementById("status").innerText = text;
+    }
+
+    async function startDetection() {
+      cameraViewContainer.style.display = "block";
+      await cameraEnhancer.open();
+      await router.startCapturing("ReadVINBarcode");
+    };
+  </script>
+</body>
+
+</html>
