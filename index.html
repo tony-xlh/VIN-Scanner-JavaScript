@@ -44,6 +44,8 @@
         "DLS2eyJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSJ9"
       );
       await Dynamsoft.Core.CoreModule.loadWasm(["DBR","DLR","DCP"]);
+      await Dynamsoft.DLR.LabelRecognizerModule.loadRecognitionData("VIN");
+      await Dynamsoft.DCP.CodeParserModule.loadSpec("VIN");
       router = await Dynamsoft.CVR.CaptureVisionRouter.createInstance();
       let view = await Dynamsoft.DCE.CameraView.createInstance();
       cameraEnhancer = await Dynamsoft.DCE.CameraEnhancer.createInstance(
