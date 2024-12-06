@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/dynamsoft-capture-vision-bundle@2.4.2200/dist/dcv.bundle.js"></script>
+  <style>
+    #status {
+      margin-left: 20px;
+    }
+
+    pre {
+      max-width: 100%;
+      background: lightgray;
+      overflow: auto;
+    }
+
+    #cameraViewContainer {
+      width: 100%;
+      height: 320px;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>VIN Scanner</h1>
+  <button id="toggleButton">Start Detection</button>
+  <span id="status"></span>
+  <br/>
+  <label>
+    Mode:
+    <select id="modeSelect">
+      <option>Read Barcodes</option>
+      <option>Read Text</option>
+    </select>
+  </label>
+  <label>
+    Enable Scan Region:
+    <input type="checkbox" id="scanRegionCheckBox"/>
+  </label>
+  <div id="cameraViewContainer"></div>
+  <div>Result:</div>
+  <pre id="parsedResult"></pre>
+  <script>
+    const cameraViewContainer = document.getElementById("cameraViewContainer");
+    const modeSelect = document.getElementById("modeSelect");
+    let templateName = "ReadVINBarcode";
+    modeSelect.addEventListener("change",function(){
+      updateTemplate(modeSelect.selectedIndex);
+    })
+    const scanRegionCheckBox = document.getElementById("scanRegionCheckBox");
+    scanRegionCheckBox.addEventListener("change",toggleScanRegion);
+    const toggleButton = document.getElementById("toggleButton");
+    toggleButton.addEventListener("click",toggleDetection)
+
+    let router;
+    let parser;
+    let cameraEnhancer;
+    init();
+    async function init(){
+      updateStatus("Initializing...");
+      Dynamsoft.License.LicenseManager.initLicense(
+        "DLS2eyJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSJ9"
+      );
+      await Dynamsoft.Core.CoreModule.loadWasm(["DBR","DLR","DCP"]);
+      await Dynamsoft.DLR.LabelRecognizerModule.loadRecognitionData("VIN");
+      await Dynamsoft.DCP.CodeParserModule.loadSpec("VIN");
+      router = await Dynamsoft.CVR.CaptureVisionRouter.createInstance();
+      parser = await Dynamsoft.DCP.CodeParser.createInstance()
+      let view = await Dynamsoft.DCE.CameraView.createInstance();
+      cameraEnhancer = await Dynamsoft.DCE.CameraEnhancer.createInstance(
+        view
+      );
+      cameraViewContainer.append(view.getUIElement());
+      await router.initSettings("./VINBarcodeTemplate.json");
+      const resultReceiver = new Dynamsoft.CVR.CapturedResultReceiver();
+      resultReceiver.onCapturedResultReceived = (result) => {
+        console.log(result);
+        let VIN;
+        if (result.items.length > 0) {
+          let item = result.items[0];
+          if (item.type === Dynamsoft.Core.EnumCapturedResultItemType.CRIT_BARCODE) {
+            VIN = item.text;
+          }else if (item.type === Dynamsoft.Core.EnumCapturedResultItemType.CRIT_TEXT_LINE) {
+            VIN = item.text;
+          }
+          if (VIN) {
+            parse(VIN);
+          }
+        }
+      }
+      await router.addResultReceiver(resultReceiver);
+      router.setInput(cameraEnhancer);
+      updateStatus("Ready.");
+    }
+
+    function updateStatus(text){
+      document.getElementById("status").innerText = text;
+    }
+
+    async function toggleDetection() {
+      if (cameraEnhancer.isOpen()) {
+        await router.stopCapturing();
+        await cameraEnhancer.close();
+        toggleButton.innerText = "Start Detection";
+      }else{
+        await cameraEnhancer.open();
+        await router.startCapturing(templateName);
+        toggleButton.innerText = "Stop Detection";
+      }
+    };
+
+    async function toggleScanRegion(){
+      if (cameraEnhancer) {
+        if (scanRegionCheckBox.checked) {
+          await cameraEnhancer.setScanRegion({
+            x: 0,
+            y: 40,
+            width: 100,
+            height: 20,
+            isMeasuredInPercentage: true,
+          });
+        }else{
+          await cameraEnhancer.setScanRegion(null);
+        }
+      }else{
+        scanRegionCheckBox.checked = false;
+      }
+    }
+
+    async function updateTemplate(mode){
+      await router.stopCapturing();
+      if (mode === 0) {
+        templateName = "ReadVINBarcode";
+        await router.initSettings("./VINBarcodeTemplate.json");
+      }else{
+        templateName = "ReadVINText";
+        await router.initSettings("./VINTextTemplate.json");
+      }
+      if (cameraEnhancer.isOpen()) {
+        await router.startCapturing(templateName);
+      }
+    }
+
+    async function parse(VIN){
+      let parsedResultItem = await parser.parse(VIN);
+      console.log(parsedResultItem);
+      let result = "VIN: " + VIN + "\n\n";
+      result = result + "Parsed JSON: \n" + JSON.stringify(JSON.parse(parsedResultItem.jsonString),null,2);
+      document.getElementById("parsedResult").innerText = result;
+    }
+  </script>
+</body>
+
+</html>

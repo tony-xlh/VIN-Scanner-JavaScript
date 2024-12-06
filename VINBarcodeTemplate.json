@@ -1,0 +1,23 @@
+{
+  "CaptureVisionTemplates": [
+    {
+      "Name": "ReadVINBarcode",
+      "ImageROIProcessingNameArray": [
+        "roi-read-vin-barcodes"
+      ]
+    }
+  ],
+  "TargetROIDefOptions": [
+    {
+      "Name": "roi-read-vin-barcodes",
+      "TaskSettingNameArray": ["task-read-vin-barcodes"]
+    }
+  ],
+  "BarcodeReaderTaskSettingOptions": [
+    {
+      "Name": "task-read-vin-barcodes",
+      "BarcodeFormatIds": ["BF_CODE_39", "BF_QR_CODE", "BF_DATAMATRIX"],
+      "ExpectedBarcodesCount": 1
+    }
+  ]
+}
