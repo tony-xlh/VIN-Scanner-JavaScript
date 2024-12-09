@@ -13,6 +13,14 @@ VIN stands for vehicle identification number. It is a unique code to identify in
 
 You can find more sample images here: <https://universe.roboflow.com/kirill-sergeev/vin-detection/>
 
+## Demo Video
+
+
+
+https://github.com/user-attachments/assets/9c713a5d-eb88-4c93-9a59-1c0d47b37314
+
+
+
 ## License Application
 
 You can apply for a license [here](https://www.dynamsoft.com/customer/license/trialLicense/?product=dcv&package=cross-platform).
